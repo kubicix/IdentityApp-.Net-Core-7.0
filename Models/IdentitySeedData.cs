@@ -5,28 +5,28 @@ namespace IdentityApp.Models
 {
     public static class IdentitySeedData
     {
-        private const string adminUser="Admin";
-        private const string adminPassword="Admin_123";
+        private const string adminUser = "admin";
+        private const string adminPassword = "Admin_123";
 
         public static async void IdentityTestUser(IApplicationBuilder app)
         {
-            var context=app.ApplicationServices.CreateScope().ServiceProvider.GetRequiredService<IdentityContext>();
+            using var scope = app.ApplicationServices.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<IdentityContext>();
 
-            if(context.Database.GetPendingMigrations().Any())
+            // Ensure the database is created and all migrations are applied
+            context.Database.Migrate();
+
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+            var user = await userManager.FindByNameAsync(adminUser);
+
+            if (user == null)
             {
-                context.Database.Migrate();
-            }
-
-            var userManager = app.ApplicationServices.CreateScope().ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
-
-            var user=await userManager.FindByNameAsync(adminUser);
-
-            if(user==null)
-            {
-                user = new IdentityUser{
-                    UserName=adminUser,
-                    Email="admin@kb.com",
-                    PhoneNumber="44444444",
+                user = new AppUser
+                {
+                    FullName = "Kubilay Birer",
+                    UserName = adminUser,
+                    Email = "admin@kb.com",
+                    PhoneNumber = "44444444"
                 };
 
                 await userManager.CreateAsync(user, adminPassword);

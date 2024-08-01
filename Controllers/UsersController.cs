@@ -1,3 +1,4 @@
+using IdentityApp.Models;
 using IdentityApp.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -6,11 +7,11 @@ namespace IdentityApp.Controllers
 {
     public class UsersController:Controller
     {
-        public UsersController(UserManager<IdentityUser> userManager)
+        public UsersController(UserManager<AppUser> userManager)
         {
             _userManager=userManager;
         }
-        private UserManager<IdentityUser> _userManager;
+        private UserManager<AppUser> _userManager;
         public IActionResult Index()
         {
             return View(_userManager.Users);
@@ -24,9 +25,10 @@ namespace IdentityApp.Controllers
         {
             if(ModelState.IsValid)
             {
-                var user = new IdentityUser {
-                    UserName = model.UserName,
+                var user = new AppUser {
+                    UserName = model.Email,
                     Email = model.Email,
+                    FullName=model.FullName
                 };
 
                 IdentityResult result = await _userManager.CreateAsync(user,model.Password);
