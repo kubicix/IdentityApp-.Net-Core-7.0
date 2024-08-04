@@ -17,6 +17,8 @@ namespace IdentityApp.ViewModels
         [Compare("Password",ErrorMessage ="Passwords don't match.")]
         public string? ConfirmPassword {get;set;} 
 
+        public IList<string>? SelectedRoles { get; set; }
+
 
     }
 }
