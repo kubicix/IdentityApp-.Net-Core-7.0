@@ -11,11 +11,14 @@ namespace IdentityApp.Controllers
         private RoleManager<AppRole> _roleManager;
         private SignInManager<AppUser> _signInManager;
 
-        public AccountController(UserManager<AppUser> userManager,RoleManager<AppRole> roleManager,SignInManager<AppUser> signInManager)
+        private IEmailSender _emailSender;
+
+        public AccountController(UserManager<AppUser> userManager,RoleManager<AppRole> roleManager,SignInManager<AppUser> signInManager,IEmailSender emailSender)
         {
             _userManager=userManager;
             _roleManager=roleManager;
             _signInManager=signInManager;
+            _emailSender=emailSender;
         }
 
         public IActionResult Login()
@@ -75,35 +78,45 @@ namespace IdentityApp.Controllers
             return View();
         }
         [HttpPost]
-        public async Task<IActionResult> Create(CreateViewModel model)
+public async Task<IActionResult> Create(CreateViewModel model)
+{
+    if (ModelState.IsValid)
+    {
+        var user = new AppUser
         {
-            if(ModelState.IsValid)
+            UserName = model.UserName,
+            Email = model.Email,
+            FullName = model.FullName
+        };
+
+        IdentityResult result = await _userManager.CreateAsync(user, model.Password);
+
+        if (result.Succeeded)
+        {
+            try
             {
-                var user = new AppUser {
-                    UserName = model.UserName,
-                    Email = model.Email,
-                    FullName=model.FullName
-                };
+                var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                var url = Url.Action("ConfirmEmail", "Account", new { user.Id, token });
 
-                IdentityResult result = await _userManager.CreateAsync(user,model.Password);
-                if(result.Succeeded)
-                {
-                    var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                await _emailSender.SendEmailAsync(user.Email, "Hesap Onayı", $"Lütfen email hesabınızı onaylamak için linke <a href='http://localhost:5157{url}'>tıklayınız.</a>");
 
-                    var url = Url.Action("ConfirmEmail","Account",new {user.Id,token});
-
-                    // email
-
-                    TempData["message"]="Check your email account for confirmation link";
-                    return RedirectToAction("Login","Account");
-                }
-                foreach(IdentityError err in result.Errors)
-                {
-                    ModelState.AddModelError("",err.Description);
-                }
+                TempData["message"] = "Email hesabınızdaki onay mailini tıklayınız.";
+                return RedirectToAction("Login", "Account");
             }
-            return View(model);
+            catch (Exception)
+            {
+                TempData["message"] = TempData["EmailError"] ?? "E-posta gönderiminde bir sorun oluştu.";
+                return RedirectToAction("Error"); // Bir hata sayfasına yönlendirebilirsiniz
+            }
         }
+
+        foreach (IdentityError err in result.Errors)
+        {
+            ModelState.AddModelError("", err.Description);
+        }
+    }
+    return View(model);
+}
 
         public async Task<IActionResult> ConfirmEmail(string Id,string token)
         {
