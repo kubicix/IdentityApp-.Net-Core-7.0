@@ -1,9 +1,11 @@
 using IdentityApp.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IdentityApp.Controllers
 {
+    [Authorize(Roles ="admin")]
     public class RolesController : Controller
     {
         private readonly RoleManager<AppRole> _roleManager;
@@ -14,6 +16,12 @@ namespace IdentityApp.Controllers
             _userManager=userManager;
         }
 
+        //AÇMAK İSTEDİĞİMİZ ACTİONU
+        //ALLOW ANONYMUS İLE AÇABİLRİZ
+        //YA DA AUTHORİZE TEK BİRİNE 
+        //KOYARAK ONUN KISITLI OLMASINI
+        //SAĞLAYABİLİRİZ
+        [AllowAnonymous]
         public IActionResult Index()
         {
             return View(_roleManager.Roles);

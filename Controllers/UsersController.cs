@@ -1,11 +1,13 @@
 using IdentityApp.Models;
 using IdentityApp.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace IdentityApp.Controllers
 {
+    [Authorize(Roles ="admin")]
     public class UsersController:Controller
     {
         private UserManager<AppUser> _userManager;
@@ -19,6 +21,7 @@ namespace IdentityApp.Controllers
         
         public IActionResult Index()
         {
+           
             return View(_userManager.Users);
         }
         
